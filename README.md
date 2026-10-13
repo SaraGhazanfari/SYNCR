@@ -55,6 +55,26 @@ Physical comparison and scene integration remain hard at every scale. Supervised
 training set raises Qwen3-VL-8B's average from 32.6% to 61.6% (on matched 200-item sets), and temporal
 ordering gains transfer to real footage (Assembly101, Panoptic).
 
+## Checkpoints
+
+LoRA adapters fine-tuned on all eight tasks (the 15,960-question training set, answer-only targets, one
+epoch, rank 16, frozen vision encoder). Accuracy (%) on the first 200 evaluation items per task:
+
+| Adapter | Base model | Base avg | SFT avg |
+|---|---|:-:|:-:|
+| [CrossVideoReasoning/SYNCR-Qwen3-VL-8B-SFT](https://huggingface.co/CrossVideoReasoning/SYNCR-Qwen3-VL-8B-SFT) | [Qwen/Qwen3-VL-8B-Instruct](https://huggingface.co/Qwen/Qwen3-VL-8B-Instruct) | 32.6 | **61.6** |
+| [CrossVideoReasoning/SYNCR-Qwen3-VL-4B-SFT](https://huggingface.co/CrossVideoReasoning/SYNCR-Qwen3-VL-4B-SFT) | [Qwen/Qwen3-VL-4B-Instruct](https://huggingface.co/Qwen/Qwen3-VL-4B-Instruct) | – | **62.6** |
+| [CrossVideoReasoning/SYNCR-InternVL3.5-8B-SFT](https://huggingface.co/CrossVideoReasoning/SYNCR-InternVL3.5-8B-SFT) | [OpenGVLab/InternVL3_5-8B-HF](https://huggingface.co/OpenGVLab/InternVL3_5-8B-HF) | 29.3 | **62.8** |
+
+Download an adapter and evaluate it on top of its base model:
+
+```bash
+huggingface-cli download CrossVideoReasoning/SYNCR-Qwen3-VL-8B-SFT --local-dir checkpoints/SYNCR-Qwen3-VL-8B-SFT
+MODEL=Qwen/Qwen3-VL-8B-Instruct ADAPTER_PATH=checkpoints/SYNCR-Qwen3-VL-8B-SFT N=200 bash scripts/eval_syncr.sh
+```
+
+For the InternVL adapter use `MODEL=OpenGVLab/InternVL3_5-8B-HF`.
+
 ## Repository layout
 
 ```

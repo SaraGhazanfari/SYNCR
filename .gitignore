@@ -5,6 +5,7 @@ __pycache__/
 # data, outputs and caches
 /data/
 hf_data/
+checkpoints/
 videos/
 json_files/
 eval_predictions/
