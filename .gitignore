@@ -1,0 +1,17 @@
+__pycache__/
+*.pyc
+.DS_Store
+
+# data, outputs and caches
+/data/
+hf_data/
+videos/
+json_files/
+eval_predictions/
+eval_results/
+merged_models/
+.cache/
+wrong_indices.txt
+
+# API keys (models/gpt.py and models/gemini.py read these files if present)
+tokens/

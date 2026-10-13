@@ -1,107 +1,184 @@
-# SYNCR: A Cross-Video Reasoning Benchmark with Synthetic Grounding
+# SYNCR: Diagnosing and Learning Cross-Video Reasoning from Simulation
 
 <p align="center">
   <img src="https://img.shields.io/badge/Task-Cross--Video%20Reasoning-blue">
-  <img src="https://img.shields.io/badge/Data-Synthetic-green">
+  <img src="https://img.shields.io/badge/Data-Simulator--Grounded-green">
+  <img src="https://img.shields.io/badge/Eval-4%2C000%20questions-orange">
+  <img src="https://img.shields.io/badge/Train-15%2C960%20questions-purple">
 </p>
 
-[**🤗 Dataset**](https://huggingface.co/datasets/CrossVideoReasoning/SYNCR) | [**📄 Paper**](https://arxiv.org/abs/2605.08412) 
+[**🤗 Dataset**](https://huggingface.co/datasets/CrossVideoReasoning/SYNCR) | [**📄 Paper**](https://arxiv.org/abs/2605.08412)
 
-**SYNCR** is a fully synthetic diagnostic benchmark engineered to test the spatiotemporal boundaries of Multimodal Large Language Models (MLLMs) operating across independent, overlapping video streams. 
+Reasoning across videos requires aligning events, matching identities, comparing motion, and integrating
+partial observations. **SYNCR** is a simulator-grounded framework for diagnosing these abilities in multimodal
+large language models and testing whether they can be learned. Built on **Habitat**, **Kubric**, and
+**CLEVRER**, its task generators derive every answer from environment state, while models see only RGB
+videos, the question, and the answer options. The same generators produce a benchmark of **4,000 evaluation
+questions** and a training set of **15,960 questions** over disjoint videos, spanning eight tasks.
 
-Unlike existing multi-video benchmarks that rely on human-annotated real-world footage, SYNCR leverages three advanced simulation engines—**CLEVRER**, **Kubric**, and **Habitat**—to eliminate annotation noise and provide deterministic, mathematically verifiable ground truth for complex, multi-perspective scenarios.
+This repository contains the task generators, the scripts that build the released benchmark and training set,
+and the evaluation harness used for the 22 models in the paper.
 
-## 📖 Abstract
+## Tasks
 
-Multimodal Large Language Models (MLLMs) have demonstrated strong capabilities in single-video understanding, yet cross-video reasoning remains largely underexplored. Existing multi-video benchmarks primarily rely on human-annotated, real-world footage, which introduces annotator ambiguity and lacks absolute physical and spatial ground truth, complicating the diagnosis of model failures. To address this, we introduce **SYNCR**, a synthetic diagnostic benchmark designed to systematically evaluate MLLMs across independent, overlapping video streams. Leveraging three simulation engines (CLEVRER, Kubric, and Habitat), SYNCR decomposes multi-video understanding into four programmatically verified cognitive pillars: **Temporal Alignment**, **Spatial Tracking**, **Comparative Reasoning**, and **Holistic Synthesis**. 
+Eight tasks in four families. Each question presents two to four clips; answer categories and option letters
+are balanced within the first 200 and across all 500 evaluation items of every task.
 
-## 🏛 The Four Cognitive Pillars
+| Family | Task | Engine | Videos / question | Clip length | Eval FPS | Chance |
+|---|---|---|:-:|:-:|:-:|:-:|
+| **Temporal Alignment** | Multi-Angle Synchronization: start offsets of three cropped camera views of one event | Kubric | 3 | 3.0 s | 12 | 25% |
+| | Sequential Ordering: chronological order of four shuffled, gapped segments | CLEVRER | 4 | 0.87 s | 25 | 25% |
+| **Spatial Tracking** | Object Re-identification: when an object seen in Video 1 first appears in Video 2 | Habitat | 2 | 20 s | 2 | 25% |
+| | Spatial Measurement: which object is closest in 3D to a target when another leaves a view | Kubric | 2 | 5.0 s | 6 | 25% |
+| **Comparative Reasoning** | Numerical Comparison: which video has more collisions, and by how many | CLEVRER | 2 | 5.12 s | 6.25 | 20% |
+| | Kinematic Comparison: which of four objects reaches the highest peak speed | CLEVRER | 2 | 5.12 s | 6.25 | 25% |
+| **Holistic Synthesis** | Object Counting: distinct instances of named categories across three walkthroughs | Habitat | 3 | 20 s | 2 | 25% |
+| | Route Planning: shortest path between rooms shown in separate route clips | Habitat | 3 | 20 s | 2 | 25% |
 
-SYNCR decomposes cross-video understanding into four foundational diagnostic pillars:
-1. **Temporal Alignment:** Synchronizing and sequencing disjointed events.
-2. **Spatial Tracking:** Maintaining object permanence and resolving cross-view geometries.
-3. **Comparative Reasoning:** Isolating kinematic or structural deviations.
-4. **Holistic Synthesis:** Aggregating fragmented inputs into a global context.
+## Results
 
-## ⚙️ Repository Structure
+Zero-shot accuracy (%) for selected models; the full table with all 22 models is in the paper. Open-weight
+models use all 500 questions per task; proprietary models (†) and the four-person human majority vote use the
+same first 100.
 
-This repository contains the codebase to procedurally generate all 8 SYNCR benchmark tasks using different 3D engines:
+| Model | Sync | Order | ReID | Meas | Num | Kin | Count | Route | **Avg** |
+|---|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| Human (majority vote) | 100.0 | 100.0 | 92.0 | 76.0 | 100.0 | 68.0 | 92.0 | 88.0 | **89.5** |
+| GPT-6 Astra† | 88.0 | 100.0 | 88.0 | 52.0 | 60.0 | 20.0 | 48.0 | 60.0 | **64.5** |
+| Gemini-3.1-Pro† | 60.0 | 96.0 | 68.0 | 48.0 | 16.0 | 8.0 | 32.0 | 40.0 | **46.0** |
+| Qwen3-VL 32B | 30.0 | 64.4 | 56.2 | 35.2 | 33.6 | 19.4 | 28.6 | 32.4 | **37.5** |
+| InternVL3.5 38B | 26.0 | 44.4 | 34.6 | 39.0 | 41.0 | 26.2 | 30.0 | 32.8 | **34.3** |
+| Qwen3-VL 8B | 29.6 | 56.4 | 47.6 | 32.6 | 29.6 | 17.2 | 30.2 | 29.4 | **34.1** |
+| LLaVA-OV 72B | 21.8 | 26.0 | 31.2 | 30.0 | 22.6 | 18.6 | 27.4 | 23.6 | **25.2** |
+
+Physical comparison and scene integration remain hard at every scale. Supervised fine-tuning on the SYNCR
+training set raises Qwen3-VL-8B's average from 32.6% to 61.6% (on matched 200-item sets), and temporal
+ordering gains transfer to real footage (Assembly101, Panoptic).
+
+## Repository layout
 
 ```
 SYNCR/
-├── generate_data.py              # Unified data generation script for all 8 tasks
-├── DATA_GENERATION_GUIDE.md      # Comprehensive guide with all task specifications
-├── README.md                     # This file
-├── utils.py                      # Shared utilities
-├── clevrer/                      # CLEVRER engine tasks
-│   ├── base_clevrer.py
-│   ├── clvr_temporal_alignment.py       # Task: Sequential ordering (Temporal Alignment)
-│   ├── clvr_comparative_reasoning.py    # Task: Kinematic & Numerical comparison (Comparative Reasoning)
-│   └── utils.py
-├── kubric/                       # Kubric engine tasks
-│   ├── base_kubric.py
-│   ├── kubric_sync.py                  # Task: Multi-angle synchronization (Temporal Alignment)
-│   ├── kubirc_spatial_meas.py          # Task: Spatial measurement (Spatial Tracking)
-│   └── base_kubric.py
-└── habitat/                      # Habitat engine tasks
-    ├── base_habitat.py
-    ├── habitat_spatial_tracking.py     # Task: Object re-identification (Spatial Tracking)
-    └── habitat_holistic_aggregation.py # Tasks: Object counting & route planning (Holistic Synthesis)
+├── generation/          task generators (CLEVRER, Kubric, Habitat) and benchmark build scripts
+│   └── README.md        how the data is generated and how the released files were built
+├── eval/
+│   ├── evaluate.py          run a model on one task file
+│   ├── evaluate_vllm.py     faster vLLM path (Qwen3-VL only)
+│   ├── answer_parse.py      answer parsing (strict and lenient scoring)
+│   ├── rescore_predictions.py, retry_failed_items.py
+│   └── stats_report.py, controls_report.py   Wilson intervals, McNemar tests, evidence controls
+├── models/              wrappers for Qwen2.5-VL / Qwen3-VL, InternVL3 / 3.5, LLaVA-OneVision, GPT, Gemini
+├── configs/             one config per task: eval file, frame rate, batch size, generation budget
+├── scripts/
+│   ├── prepare_data.py      converts the Hugging Face release into per-task eval files
+│   └── eval_syncr.sh        runs all eight tasks for one model
+└── utils.py
 ```
 
-## 🚀 Data Generation
-
-### Quick Start
-
-To generate SYNCR benchmark data, use the unified `generate_data.py` script:
+## Installation
 
 ```bash
-python generate_data.py --dataset <DATASET_NAME> [OPTIONS]
+git clone https://github.com/SaraGhazanfari/SYNCR.git && cd SYNCR
+pip install -r requirements.txt
 ```
 
-### Available Datasets (8 Total Tasks)
+Install `openai` or `google-genai` for API models, and `flash-attn` if your GPU supports it.
 
-**Temporal Alignment:**
-- **`kubric_sync`** — Multi-angle temporal synchronization QA
-- **`clevrer_temporal`** — Sequential ordering of video segments
+## Evaluating a model
 
-**Spatial Tracking:**
-- **`kubric_spatial`** — Spatial measurement 
-- **`habitat_tracking`** — Object re-identification 
-
-**Comparative Reasoning:**
-- **`clevrer_comparative`** — Kinematic and collision comparison QA
-
-**Holistic Synthesis:**
-- **`habitat_holistic`** — Object counting and route planning QA
-
-### Example Commands
+**1. Download the data.**
 
 ```bash
-# Temporal Alignment: Multi-angle synchronization
-python generate_data.py --dataset kubric_sync --path /path/to/kubric --total-num 1000 --save
-
-# Temporal Alignment: Sequential ordering
-python generate_data.py --dataset clevrer_temporal --root-path /path/to/clevrer --total-num 1000 --save
-
-# Spatial Tracking: Spatial measurement
-python generate_data.py --dataset kubric_spatial --path /path/to/kubric --total-num 1000 --save
-
-# Comparative Reasoning: Kinematic comparison
-python generate_data.py --dataset clevrer_comparative --root-path /path/to/clevrer \
-    --task-type kinematic --num-samples 100 --save
-
-# Holistic Synthesis: Object counting
-python generate_data.py --dataset habitat_holistic --root-path /path/to/habitat \
-    --task object_counting --total-num 10000 --save --verbose
+huggingface-cli download CrossVideoReasoning/SYNCR --repo-type dataset --local-dir hf_data
+cd hf_data && mkdir -p videos && for f in *_data.tar; do tar -xf "$f" -C videos/; done && cd ..
 ```
 
-For complete documentation, argument specifications, and advanced usage, see [**DATA_GENERATION_GUIDE.md**](DATA_GENERATION_GUIDE.md).
+The Habitat and Kubric videos are in the archives. **CLEVRER videos are not redistributed**: download
+`video_validation.zip` (and `video_train.zip` for the training set) from <http://clevrer.csail.mit.edu> and
+extract them so that paths like `hf_data/videos/clvr/video_validation/video_11194.mp4` exist. If an archive
+extracts into subfolders of 1,000 videos, move the files up one level.
 
-## 📝 Citation
+**2. Write the per-task evaluation files.**
 
-If you use SYNCR in your research, please consider citing our work:
+```bash
+python scripts/prepare_data.py --dataset-root hf_data --absolute-video-paths
+```
+
+This writes `json_files/eval/<Family>/<Task>.jsonl`, the files the configs point to, and reports any video
+source it cannot find.
+
+**3. Evaluate.** All eight tasks with the paper's settings:
+
+```bash
+MODEL=Qwen/Qwen3-VL-8B-Instruct bash scripts/eval_syncr.sh
+```
+
+or a single task:
+
+```bash
+python -m eval.evaluate --model_version Qwen/Qwen3-VL-8B-Instruct \
+    --filepath json_files/eval/Comparative_Reasoning/Clvr_Kinematic_Comparison_optv3c.jsonl \
+    --fps 6.25 --batch_size 2 --sample-num 500
+```
+
+The wrapper is chosen from the model name: `qwen` (Qwen2.5-VL, Qwen3-VL), `intern` (InternVL3 / 3.5 via remote
+code; names ending in `-hf` use the native transformers classes), `llava` (LLaVA-OneVision), `gpt`, `gemini`.
+API keys are read from `OPENAI_API_KEY` / `GEMINI_API_KEY`, or from `tokens/{gpt,gemini}_api_key.json`.
+
+**4. Report.** Per-item predictions are saved under `eval_predictions/hf/<model>/`. Accuracy with 95% Wilson
+intervals and a bootstrapped task average:
+
+```bash
+python -m eval.stats_report --tag Qwen__Qwen3-VL-8B-Instruct --n 500
+# paired comparison of two models on the same items (exact McNemar test per task)
+python -m eval.stats_report --tag <model A> --compare <model B> --n 500
+```
+
+### Protocol
+
+- Videos are passed in annotation order and labelled `Video 1:`, `Video 2:`, ... The question refers to them
+  by these labels, so order matters.
+- Clips with `start_sec` / `end_sec` are cropped before they reach the model. For Qwen, per-frame timestamps
+  are rebased to start at 0 in each clip, and Gemini receives pre-cut clips, so absolute timestamps cannot
+  reveal the answer to Ordering or Synchronization.
+- Decoding is deterministic where the backend supports it. The prompt asks for
+  `Answer: <letter>) <option text>`. `eval.evaluate` prints strict accuracy, which requires that line. The
+  paper reports lenient accuracy, computed from the saved predictions by `eval.stats_report` (or
+  `eval.rescore_predictions`): the final `Answer:` line when one exists, otherwise an explicit option
+  commitment, a single lettered final line, or an exact option text. Unparsed responses count as wrong.
+- Give reasoning models a large enough generation budget. Synchronization and Ordering use
+  `max_new_tokens=8192` (set in their configs); at 2,048 tokens many answers are cut off before the answer
+  line and score as wrong.
+
+### Evidence controls
+
+| Flag | Control |
+|---|---|
+| `--no-video` | question and options only; tests for text shortcuts |
+| `--single-video` | one randomly chosen video per item; tests dependence on multiple inputs |
+| `--no-option` | open-ended answering instead of multiple choice |
+
+Run them with `CONDITION=novideo` or `CONDITION=single` in `scripts/eval_syncr.sh`, then summarize with
+`python -m eval.controls_report --tag <model> --n <N> --suite syncr`.
+
+## Generating data
+
+See [`generation/README.md`](generation/README.md) for the raw data layout, the question generators, and the
+staged build of the released evaluation and training files.
+
+## Citation
 
 ```bibtex
-
+@article{ghazanfari2026syncr,
+  title   = {SYNCR: Diagnosing and Learning Cross-Video Reasoning from Simulation},
+  author  = {Ghazanfari, Sara and Garg, Siddharth and Krishnamurthy, Prashanth and Khorrami, Farshad},
+  journal = {arXiv preprint arXiv:2605.08412},
+  year    = {2026}
+}
 ```
+
+## License
+
+The code is released under the MIT License (`LICENSE`). The annotations on Hugging Face are released under
+CC BY 4.0. Rendered videos derive from CLEVRER, Kubric, and Habitat (HM3D) and remain subject to their upstream
+licenses.

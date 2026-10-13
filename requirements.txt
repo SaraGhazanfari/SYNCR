@@ -1,0 +1,23 @@
+# --- Evaluation ---
+torch
+torchvision
+transformers>=4.57        # Qwen3-VL and native InternVL classes
+accelerate
+peft                      # --adapter_path
+qwen-vl-utils             # Qwen2.5-VL / Qwen3-VL video input
+av                        # PyAV video decoding (Qwen)
+decord                    # video decoding (Qwen, LLaVA-OneVision)
+opencv-python             # video decoding (InternVL), Kubric frames
+numpy
+Pillow
+einops                    # InternVL remote code
+timm                      # InternVL remote code
+sentencepiece
+# flash-attn              # optional, used for Qwen when installed
+# openai                  # GPT models
+# google-genai            # Gemini models
+# vllm                    # optional eval/evaluate_vllm.py (Qwen3-VL only), separate environment recommended
+
+# --- Data generation ---
+networkx                  # Habitat route graphs
+# habitat-sim, scipy, imageio  # only to re-render Habitat videos (generation/habitat/habitat_simulator.py)

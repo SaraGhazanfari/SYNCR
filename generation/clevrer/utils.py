@@ -48,12 +48,48 @@ def add_alphabet_to_options(options, answer):
     for opt_idx in range(len(options)):
         if options[opt_idx] == answer:
             answer = f"{chr(65 + opt_idx)}) {options[opt_idx]}"
-        options[opt_idx] = f"{chr(65 + opt_idx)}) {options[opt_idx]}" 
+        options[opt_idx] = f"{chr(65 + opt_idx)}) {options[opt_idx]}"
     return options, answer
+
+def sample_order_distractors(correct_order, n_distractors=3, rng=None):
+    """Wrong orderings for Sequential Ordering, drawn uniformly from all
+    permutations except the correct one.
+
+    The previous scheme took the lowest-Hamming-distance permutations, which
+    made the correct order the "centre" of the four options (the option
+    agreeing most, position by position, with the other three was correct on
+    200/200 eval and 2000/2000 train items). Uniform draws
+    give no option a systematic distance advantage.
+    """
+    import itertools
+    import random
+    rng = rng or random
+    correct_order = tuple(correct_order)
+    pool = [p for p in itertools.permutations(sorted(correct_order)) if p != correct_order]
+    return rng.sample(pool, n_distractors)
 
 def get_aligned_frame_id(frame_id, nframes=32):
     frame_rate = 128 / nframes
-    return int(frame_id // frame_rate) 
+    return int(frame_id // frame_rate)
+
+def get_sampled_frame_index(frame_id, total_frames=128, nframes=32):
+    """
+    Maps a raw simulation frame index to the position it lands on among the
+    nframes actually sampled by qwen_vl_utils at train/inference time, using
+    the same formula the library itself uses to pick which frames to decode:
+    torch.linspace(0, total_frames - 1, nframes).round() (verified directly
+    against the installed qwen_vl_utils source, not assumed). This is a
+    different, close-but-not-identical formula from get_aligned_frame_id's
+    floor(frame_id / (total_frames / nframes)) -- e.g. frame 100 of 128:
+    the floor-based helper gives 25, this gives 24 -- so a "Frame N" claim
+    built from the older helper can point at a frame the model didn't
+    actually sample. Only valid for the whole-video case (no video_start/
+    video_end sub-clipping); a sub-clipped video needs start/end passed as
+    total_frames's replacement range, not this function as-is.
+    """
+    if nframes <= 1:
+        return 0
+    return round(frame_id * (nframes - 1) / (total_frames - 1))
 
 def get_time_value(frame_id, time_mode='frame', nframes=32, fps=25.0):
     """

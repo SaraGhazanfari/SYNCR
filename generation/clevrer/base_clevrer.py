@@ -3,7 +3,7 @@ import json
 from utils import write_jsonl_file
 import cv2
 import random
-from clevrer.utils import *
+from generation.clevrer.utils import *
 
 
 class CLEVRER_Dataset:
@@ -39,7 +39,7 @@ class CLEVRER_Dataset:
         with open(os.path.join(self.ann_path, ann_file)) as file:
             raw_ann_dict = json.load(file)
         
-        
+        #'scene_index', 'video_filename', 'object_property', 'motion_trajectory', 'collision'
         return raw_ann_dict
         
     def _process_video(self, video_file):
@@ -65,7 +65,7 @@ class CLEVRER_Dataset:
     def _get_velocity_item(self, idx):
         (ann_name, ann_dict), = self.data_list[idx].items()
         video_path = os.path.join(self.video_path, f"video_{ann_name}.mp4")
-        
+        # frames = self._process_video(video_path)
         max_velocity, fastest_object, frame_idx = get_fastest_speed(ann_dict)
         return video_path, max_velocity, fastest_object, frame_idx
     
