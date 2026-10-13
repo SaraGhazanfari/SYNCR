@@ -1,4 +1,4 @@
-# SYNCR: Diagnosing and Learning Cross-Video Reasoning from Simulation
+# SYNCR: A Cross-Video Reasoning Benchmark with Synthetic Grounding
 
 <p align="center">
   <img src="https://img.shields.io/badge/Task-Cross--Video%20Reasoning-blue">
@@ -7,7 +7,7 @@
   <img src="https://img.shields.io/badge/Train-15%2C960%20questions-purple">
 </p>
 
-[**🤗 Dataset**](https://huggingface.co/datasets/CrossVideoReasoning/SYNCR) | [**📄 Paper**](https://arxiv.org/abs/2605.08412)
+[**🤗 Dataset**](https://huggingface.co/datasets/CrossVideoReasoning/SYNCR) | [**🤗 Checkpoints**](#checkpoints) | [**📄 Paper**](https://arxiv.org/abs/2605.08412)
 
 Reasoning across videos requires aligning events, matching identities, comparing motion, and integrating
 partial observations. **SYNCR** is a simulator-grounded framework for diagnosing these abilities in multimodal
@@ -17,7 +17,11 @@ videos, the question, and the answer options. The same generators produce a benc
 questions** and a training set of **15,960 questions** over disjoint videos, spanning eight tasks.
 
 This repository contains the task generators, the scripts that build the released benchmark and training set,
-and the evaluation harness used for the 22 models in the paper.
+and the evaluation harness used for the 22 models in the paper. We also release
+[LoRA checkpoints](#checkpoints) fine-tuned on the SYNCR training set.
+
+> The [arXiv paper](https://arxiv.org/abs/2605.08412) covers the benchmark and the zero-shot evaluation. The
+> training set, the fine-tuning results and the checkpoints are described in an extended version, coming soon.
 
 ## Tasks
 
@@ -51,14 +55,16 @@ same first 100.
 | Qwen3-VL 8B | 29.6 | 56.4 | 47.6 | 32.6 | 29.6 | 17.2 | 30.2 | 29.4 | **34.1** |
 | LLaVA-OV 72B | 21.8 | 26.0 | 31.2 | 30.0 | 22.6 | 18.6 | 27.4 | 23.6 | **25.2** |
 
-Physical comparison and scene integration remain hard at every scale. Supervised fine-tuning on the SYNCR
-training set raises Qwen3-VL-8B's average from 32.6% to 61.6% (on matched 200-item sets), and temporal
-ordering gains transfer to real footage (Assembly101, Panoptic).
+Physical comparison and scene integration remain hard at every scale. In the extended version, supervised
+fine-tuning on the SYNCR training set raises Qwen3-VL-8B's average from 32.6% to 61.6% (on matched 200-item
+sets), and temporal ordering gains transfer to real footage (Assembly101, Panoptic); see
+[Checkpoints](#checkpoints).
 
 ## Checkpoints
 
 LoRA adapters fine-tuned on all eight tasks (the 15,960-question training set, answer-only targets, one
-epoch, rank 16, frozen vision encoder). Accuracy (%) on the first 200 evaluation items per task:
+epoch, rank 16, frozen vision encoder). Accuracy (%) on the first 200 evaluation items per task, from the
+extended version of the paper:
 
 | Adapter | Base model | Base avg | SFT avg |
 |---|---|:-:|:-:|
@@ -190,7 +196,7 @@ staged build of the released evaluation and training files.
 
 ```bibtex
 @article{ghazanfari2026syncr,
-  title   = {SYNCR: Diagnosing and Learning Cross-Video Reasoning from Simulation},
+  title   = {SYNCR: A Cross-Video Reasoning Benchmark with Synthetic Grounding},
   author  = {Ghazanfari, Sara and Garg, Siddharth and Krishnamurthy, Prashanth and Khorrami, Farshad},
   journal = {arXiv preprint arXiv:2605.08412},
   year    = {2026}
